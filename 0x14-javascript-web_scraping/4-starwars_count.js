@@ -1,15 +1,21 @@
 #!/usr/bin/node
 const request = require('request');
-request.get(process.argv[2], function (err, response, body) {
-  if (err) throw err;
-  else if (response.statusCode === 200) {
-    let count = 0;
-    let films = JSON.parse(body).results;
-    for (let movie of films) {
-      for (let char of movie.characters) {
-        if (char.endsWith('18/')) { count++; }
-      }
-    }
-    console.log(count);
+const url = process.argv[2];
+let data;
+let movies = 0;
+request(url, function (error, response, body) {
+  if (error) {
+    console.error(error);
+  } else {
+    data = JSON.parse(body);
+    data.results.forEach(function (result) {
+      result.characters.forEach(function (character) {
+        const split = character.split('/');
+        if (split[split.length - 2] === '18') {
+          movies++;
+        }
+      });
+    });
+    console.log(movies);
   }
 });
