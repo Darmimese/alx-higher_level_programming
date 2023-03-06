@@ -1,35 +1,23 @@
 #!/usr/bin/node
-/**
- * Script that prints all characters of a Star Wars movie
- */
+let request = require('request');
+let movie = 'http://swapi.co/api/films/';
 
-const request = require('request');
-const process = require('process');
-const filmId = process.argv[2];
-const url = `https://swapi-api.hbtn.io/api/films/${filmId}`;
-
-function characterRequest(characterUrl) {
-    return new Promise((resolve, reject) => {
-        request.get(characterUrl, (err, _resp, body) => {
-            if (err !== null) {
-                reject(err);
-            }
-            resolve(body);
+request.get(movie + process.argv[2], function (err, response, body) {
+  if (err) throw err;
+  if (response.statusCode === 200) {
+    let everything = JSON.parse(body);
+    let listch = [];
+    for (let charac of everything.characters) {
+      listch.push(new Promise(function (resolve, reject) {
+        request.get(charac, function (err, response, body) {
+          if (err) throw err; if (response.statusCode === 200) { resolve(JSON.parse(body).name); } else { reject(Error('Unknown')); }
         });
-    });
-}
-
-request.get(url, (err, _resp, body) => {
-    if (err === null) {
-        const film = JSON.parse(body);
-        const characters = film.characters;
-        characters.forEach((character) => {
-            characterRequest(character).then((body) => {
-                const characterInfo = JSON.parse(body);
-                console.log(characterInfo.name);
-            }).catch(err => console.log(err));
-        });
-    } else {
-        console.log(err);
+      }));
     }
+    Promise.all(listch).then(function (names) {
+      names.forEach(function (name) {
+        console.log(name);
+      });
+    });
+  }
 });
